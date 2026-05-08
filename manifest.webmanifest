@@ -1,9 +1,0 @@
-{
-  "name": "토토 데이보드",
-  "short_name": "토토데이",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#f4f0e8",
-  "theme_color": "#2f6fed",
-  "icons": []
-}
