@@ -1,0 +1,13 @@
+{
+  "name": "today-ai-planner",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Todoist-inspired daily task planner with AI task organization and AI news",
+  "scripts": {
+    "dev": "netlify dev",
+    "check": "node --check public/app.js && node --check netlify/functions/organize-task.mjs && node --check netlify/functions/ai-news.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
