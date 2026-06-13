@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#d1453b" />
+    <meta name="description" content="직접 입력하거나 AI와 음성으로 정리하는 오늘의 할 일 관리 서비스" />
+    <title>오늘AI 플래너</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar" aria-label="주요 메뉴">
+        <div class="brand-row">
+          <button class="brand" type="button" data-view="today" aria-label="오늘 화면으로 이동">
+            <span class="brand-mark">오</span><span>오늘AI</span>
+          </button>
+          <button class="icon-button mobile-only" id="closeSidebarButton" type="button" aria-label="메뉴 닫기">×</button>
+        </div>
+        <button class="add-task-button" id="sidebarAddButton" type="button"><span class="plus-circle">+</span>할 일 추가</button>
+        <nav class="nav-list" aria-label="할 일 보기">
+          <button class="nav-item" data-view="inbox" type="button"><span class="nav-icon">⌁</span><span>관리함</span><span class="nav-count" id="inboxCount">0</span></button>
+          <button class="nav-item active" data-view="today" type="button"><span class="nav-icon calendar-icon" id="todayDateIcon">1</span><span>오늘</span><span class="nav-count" id="todayCount">0</span></button>
+          <button class="nav-item" data-view="upcoming" type="button"><span class="nav-icon">▦</span><span>다음 일정</span><span class="nav-count" id="upcomingCount">0</span></button>
+          <button class="nav-item" data-view="news" type="button"><span class="nav-icon">✦</span><span>AI 데일리 뉴스</span><span class="live-dot" title="자동 업데이트"></span></button>
+        </nav>
+        <div class="sidebar-section">
+          <div class="sidebar-heading"><span>내 프로젝트</span><button class="tiny-button" id="newProjectButton" type="button" aria-label="프로젝트 추가">+</button></div>
+          <div id="projectList" class="project-list"></div>
+        </div>
+        <div class="sidebar-footer">
+          <button class="nav-item" id="openSettingsButton" type="button"><span class="nav-icon">⚙</span><span>AI 설정</span><span class="key-state" id="keyState">미설정</span></button>
+          <p>할 일은 이 브라우저에만 저장됩니다.</p>
+        </div>
+      </aside>
+      <div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+
+      <main class="main-area">
+        <header class="topbar">
+          <button class="icon-button mobile-only" id="openSidebarButton" type="button" aria-label="메뉴 열기">☰</button>
+          <div class="topbar-spacer"></div>
+          <button class="top-action" id="focusQuickAddButton" type="button">+ 빠른 추가</button>
+          <button class="avatar-button" id="avatarButton" type="button" aria-label="AI 설정 열기">AI</button>
+        </header>
+
+        <div class="content-wrap">
+          <section class="view active" id="tasksView" aria-labelledby="viewTitle">
+            <div class="page-heading">
+              <div><p class="eyebrow" id="viewEyebrow">오늘의 계획</p><h1 id="viewTitle">오늘</h1><p class="date-label" id="dateLabel"></p></div>
+              <div class="progress-card" aria-label="오늘의 완료 진행률">
+                <div class="progress-copy"><span>오늘의 달성률</span><strong id="progressText">0%</strong></div>
+                <div class="progress-track"><span id="progressBar"></span></div>
+              </div>
+            </div>
+
+            <section class="ai-capture-card" aria-labelledby="aiCaptureTitle">
+              <div class="ai-card-heading">
+                <div class="ai-orb">✦</div>
+                <div><p class="eyebrow">AI 빠른 정리</p><h2 id="aiCaptureTitle">말하듯 적으면 할 일로 정리해요</h2></div>
+                <span class="privacy-badge">키는 세션에만 보관</span>
+              </div>
+              <div class="ai-input-row">
+                <textarea id="aiTaskInput" rows="2" placeholder="예: 내일 오후 3시 치과 예약하고, 오늘 저녁까지 발표 자료 초안 만들기. 발표 자료는 중요도 높음."></textarea>
+                <button class="mic-button" id="micButton" type="button" aria-label="음성 입력 시작"><span class="mic-icon"></span><span id="micButtonText">음성</span></button>
+                <button class="primary-button" id="aiOrganizeButton" type="button">✦ AI로 정리</button>
+              </div>
+              <div class="ai-status-row"><p id="aiHint">여러 할 일을 한 문장에 적어도 자동으로 나눕니다.</p><button class="text-button" id="showExampleButton" type="button">예시 입력</button></div>
+              <div class="ai-loading" id="aiLoading" hidden><span></span><span></span><span></span><p>할 일을 이해하고 정리하는 중이에요.</p></div>
+            </section>
+
+            <section class="task-panel" aria-labelledby="taskSectionTitle">
+              <div class="task-section-header">
+                <div><h2 id="taskSectionTitle">오늘 할 일</h2><p id="taskSummary">완료할 일을 차근차근 시작해 보세요.</p></div>
+                <div class="task-actions">
+                  <button class="filter-button active" type="button" data-filter="all">전체</button>
+                  <button class="filter-button" type="button" data-filter="open">진행 중</button>
+                  <button class="filter-button" type="button" data-filter="done">완료</button>
+                </div>
+              </div>
+              <div class="task-list" id="taskList"></div>
+              <form class="quick-add-form" id="quickAddForm">
+                <button class="plus-button" type="submit" aria-label="할 일 추가">+</button>
+                <input id="quickTaskTitle" type="text" autocomplete="off" placeholder="할 일 직접 입력 후 Enter" aria-label="새 할 일 제목" />
+                <input id="quickDueDate" type="date" aria-label="마감 날짜" />
+                <select id="quickPriority" aria-label="중요도"><option value="4">보통</option><option value="3">중요</option><option value="2">매우 중요</option><option value="1">최우선</option></select>
+              </form>
+            </section>
+          </section>
+
+          <section class="view" id="newsView" aria-labelledby="newsTitle">
+            <div class="page-heading news-heading">
+              <div><p class="eyebrow">매일 새로 보는 AI 흐름</p><h1 id="newsTitle">AI 데일리 뉴스</h1><p class="date-label">주요 AI 소식을 최신순으로 모아 보여줍니다.</p></div>
+              <button class="secondary-button" id="refreshNewsButton" type="button">↻ 새로고침</button>
+            </div>
+            <div class="news-filter-row" role="tablist" aria-label="뉴스 분류">
+              <button class="news-filter active" type="button" data-news-filter="all">전체</button>
+              <button class="news-filter" type="button" data-news-filter="product">제품·서비스</button>
+              <button class="news-filter" type="button" data-news-filter="research">연구</button>
+              <button class="news-filter" type="button" data-news-filter="policy">정책·산업</button>
+            </div>
+            <div class="news-status" id="newsStatus">뉴스를 불러오는 중입니다.</div>
+            <div class="news-grid" id="newsGrid"></div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div class="toast-region" id="toastRegion" aria-live="polite" aria-atomic="true"></div>
+
+    <dialog class="modal" id="settingsDialog">
+      <form method="dialog" class="modal-card" id="settingsForm">
+        <div class="modal-heading"><div><p class="eyebrow">AI 연결</p><h2>OpenAI API 키 설정</h2></div><button class="icon-button" value="cancel" aria-label="닫기">×</button></div>
+        <div class="security-note"><strong>공개 소스에는 저장하지 않습니다.</strong><p>입력한 키는 현재 브라우저 탭의 sessionStorage에만 보관되고, AI 정리 요청 때 Netlify Function으로 전송됩니다. 브라우저를 닫으면 자동 삭제됩니다.</p></div>
+        <label class="field-label" for="apiKeyInput">OpenAI API 키</label>
+        <div class="secret-input-wrap"><input id="apiKeyInput" type="password" autocomplete="off" placeholder="sk-..." /><button class="text-button" id="toggleKeyButton" type="button">보기</button></div>
+        <p class="field-help">공용 컴퓨터에서는 입력하지 마세요. 운영 서비스는 Netlify 환경변수 방식이 더 안전합니다.</p>
+        <div class="modal-actions"><button class="danger-text-button" id="forgetKeyButton" type="button">키 지우기</button><span class="modal-spacer"></span><button class="secondary-button" value="cancel">취소</button><button class="primary-button" id="saveKeyButton" value="default">세션에 저장</button></div>
+      </form>
+    </dialog>
+
+    <dialog class="modal" id="projectDialog">
+      <form method="dialog" class="modal-card compact" id="projectForm">
+        <div class="modal-heading"><div><p class="eyebrow">프로젝트</p><h2>새 프로젝트 만들기</h2></div><button class="icon-button" value="cancel" aria-label="닫기">×</button></div>
+        <label class="field-label" for="projectNameInput">프로젝트 이름</label><input id="projectNameInput" type="text" maxlength="30" placeholder="예: 학교, 개인, 업무" />
+        <div class="modal-actions"><span class="modal-spacer"></span><button class="secondary-button" value="cancel">취소</button><button class="primary-button" value="default">만들기</button></div>
+      </form>
+    </dialog>
+
+    <template id="taskTemplate"><article class="task-item"><button class="task-check" type="button" aria-label="할 일 완료"></button><div class="task-body"><div class="task-title-row"><h3 class="task-title"></h3><span class="priority-chip"></span></div><p class="task-description"></p><div class="task-meta"></div></div><button class="task-menu-button" type="button" aria-label="할 일 삭제">⋯</button></article></template>
+    <template id="newsTemplate"><article class="news-card"><div class="news-card-topline"><span class="news-source"></span><span class="news-category"></span></div><h2 class="news-card-title"></h2><p class="news-description"></p><div class="news-card-footer"><time class="news-time"></time><a class="news-link" target="_blank" rel="noopener noreferrer">원문 보기 ↗</a></div></article></template>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
